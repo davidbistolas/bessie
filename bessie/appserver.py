@@ -39,7 +39,7 @@ def configure(config_file):
                            help="Number of processes to start")
     tornado.options.define("version", default=1.5)
     tornado.options.define("applications",
-                           default="./apps",
+                           default="./api",
                            help="Location of Applications")
     tornado.options.define("development",
                            default=True,
