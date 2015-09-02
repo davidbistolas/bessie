@@ -156,8 +156,7 @@ class BaseHandler(tornado.web.RequestHandler):
                                callback=checked_callback,
                                allow_nonstandard_methods=True)
 
-    @staticmethod
-    def check_fetch_results(callback, response):
+    def check_fetch_results(self, callback, response):
         """
         Tornado async httpclient's error checking is raw- this hook
         will take care of it and move us on to the next callback
