@@ -239,9 +239,10 @@ class AppHandler(BaseHandler):
     def initialize(self, path=None):
         """Initialize the application.py Handler"""
         super(AppHandler, self).initialize()
-        uri = "{}{}.py".format(self.path, self.request.uri)
+        module_path = ".{}.py".format(self.request.uri)
+        print module_path
         try:
-            module = imp.load_source('handler', uri)
+            module = imp.load_source('handler', module_path)
             loadable_app = self.get_application_from_module(module)
             self.loadable_app=loadable_app(self)
         except IOError:

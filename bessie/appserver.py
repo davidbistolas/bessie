@@ -12,11 +12,10 @@ def get_web_app():
     :return: tornado.web.Application
     """
     app = tornado.options.options.applications
-
+    static_path = tornado.options.options.static_path
     return tornado.web.Application([
-        (r"/(.*)", AppHandler,
-         {"path": app}
-         )
+        (r"/api/(.*)", AppHandler,  {"path": app}),
+        (r'/(.*)', tornado.web.StaticFileHandler, {'path': static_path})
 
     ],
         cookie_secret=tornado.options.options.hmac_key,
@@ -37,10 +36,14 @@ def configure(config_file):
                            help="Port to run the server on")
     tornado.options.define("threads", default=1,
                            help="Number of processes to start")
-    tornado.options.define("version", default=1.5)
+    tornado.options.define("version", default=1.0)
     tornado.options.define("applications",
                            default="./api",
                            help="Location of Applications")
+    tornado.options.define("static_path",
+                           default="./static",
+                           help="Location of Applications")
+
     tornado.options.define("development",
                            default=True,
                            help="Development/Debug Mode")
