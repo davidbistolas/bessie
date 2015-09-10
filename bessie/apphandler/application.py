@@ -5,6 +5,7 @@ class loadable(object):
 
     def __init__(self, handler):
         self.handler = handler
+        self.fetch = handler.fetch
 
     @asynchronous
     def get(self, *args, **kwargs):

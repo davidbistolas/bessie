@@ -225,11 +225,13 @@ class AppHandler(BaseHandler):
         uri = "{}{}.py".format(self.path, self.request.uri)
         try:
             loadable_app = imp.load_source('handler',uri)
+            self.loadable_app = loadable_app.Application(self)
         except IOError:
-            loadable_app = self.default
+            self.loadable_app = self.default
 
-        self.loadable_app = loadable_app.Application(self)
 
+
+    @asynchronous
     def get(self, *args, **kwargs):
         """Get Handler"""
 
