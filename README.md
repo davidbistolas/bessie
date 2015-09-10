@@ -1,5 +1,5 @@
-# bessie
+# Lightweight Webapp Server
 
-An extensible web framework for managing high performance server applications. 
+An extensible, lightweight web framework for creating high performance server applications based on TornadoWeb.
 
-Requirements: Tornadoweb 4.2.1, Celery 3.1.18 with RabbitMQ
+Usage: TBD
