@@ -6,11 +6,6 @@ class Application(loadable):
 
     @asynchronous
     def get(self, *args, **kwargs):
-        self.fetch("http://www.google.ca", callback = self.got)
-
-    @asynchronous
-    def got(self, data):
-        self.handler.write(data.body)
-        print data
-        self.handler.finish()
+        self.write("Here we go!")
+        self.finish()
 

@@ -10,6 +10,7 @@ import tornado
 from tornado import web, ioloop, options
 from tornado.httpclient import AsyncHTTPClient
 from tornado.web import asynchronous
+import apphandler
 
 class BaseHandler(tornado.web.RequestHandler):
     """Base request handler- all other handlers will subclass this
@@ -219,20 +220,54 @@ class AppHandler(BaseHandler):
         self.default = BaseHandler
         super(AppHandler, self).__init__(application, request, **kwargs)
 
+    def get_application_from_module(self, module):
+        module_dictionary = module.__dict__
+
+        results = [
+            module_dictionary[classname] for classname in module_dictionary if (
+                isinstance(module_dictionary[classname], type) and
+                module_dictionary[classname].__module__ == module.__name__
+            )
+        ]
+
+        for result in results:
+            if apphandler.application.loadable in result.__bases__:
+                return result
+
+        raise Exception("Unable to load application from {}".format(str(module)))
+
     def initialize(self, path=None):
         """Initialize the application.py Handler"""
         super(AppHandler, self).initialize()
         uri = "{}{}.py".format(self.path, self.request.uri)
         try:
-            loadable_app = imp.load_source('handler',uri)
-            self.loadable_app = loadable_app.Application(self)
+            module = imp.load_source('handler', uri)
+            loadable_app = self.get_application_from_module(module)
+            self.loadable_app=loadable_app(self)
         except IOError:
-            self.loadable_app = self.default
-
+            self.loadable_app = self.default(self.application, self.request)
 
 
     @asynchronous
     def get(self, *args, **kwargs):
         """Get Handler"""
-
         self.loadable_app.get(*args, **kwargs)
+
+
+    @asynchronous
+    def post(self, *args, **kwargs):
+        """Get Handler"""
+        self.loadable_app.post(*args, **kwargs)
+
+
+    @asynchronous
+    def put(self, *args, **kwargs):
+        """Get Handler"""
+        self.loadable_app.put(*args, **kwargs)
+
+
+    @asynchronous
+    def delete(self, *args, **kwargs):
+        """Get Handler"""
+        self.loadable_app.delete(*args, **kwargs)
+
