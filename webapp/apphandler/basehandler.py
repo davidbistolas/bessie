@@ -7,10 +7,11 @@ import functools
 import imp
 
 import tornado
-from tornado import web, ioloop, options
+from tornado import ioloop, options
 from tornado.httpclient import AsyncHTTPClient
 from tornado.web import asynchronous
 import apphandler
+
 
 class BaseHandler(tornado.web.RequestHandler):
     """Base request handler- all other handlers will subclass this
@@ -29,6 +30,7 @@ class BaseHandler(tornado.web.RequestHandler):
             io_loop=self.ioloop, force_instance=True, max_clients=20)
         self.logging = logging.getLogger(self.__class__.__name__)
         self.options = tornado.options.options
+        self.loadable_app = None
 
     def check_access(self, password, username, domain):
         """
@@ -48,8 +50,10 @@ class BaseHandler(tornado.web.RequestHandler):
         """
         return self.get_secure_cookie("username")
 
-    def get_secure_cookie(self, name):
-        """ Get the nginx compatible secure cookie"""
+    def get_secure_cookie(self, name, **kwargs):
+        """ Get the nginx compatible secure cookie
+        :param **kwargs:
+        """
 
         cookie_secret = self.application.settings["cookie_secret"]
 
@@ -213,6 +217,9 @@ class BaseHandler(tornado.web.RequestHandler):
 class AppHandler(BaseHandler):
     """Handler for applications"""
 
+    def data_received(self, chunk):
+        super(AppHandler, self).data_received(chunk)
+
     def __init__(self, application, request, path=None, **kwargs):
         self.path = path
         self.application = application
@@ -228,7 +235,7 @@ class AppHandler(BaseHandler):
                 isinstance(module_dictionary[classname], type) and
                 module_dictionary[classname].__module__ == module.__name__
             )
-        ]
+            ]
 
         for result in results:
             if apphandler.application.loadable in result.__bases__:
@@ -240,35 +247,29 @@ class AppHandler(BaseHandler):
         """Initialize the application.py Handler"""
         super(AppHandler, self).initialize()
         module_path = ".{}.py".format(self.request.uri)
-        print module_path
         try:
             module = imp.load_source('handler', module_path)
             loadable_app = self.get_application_from_module(module)
-            self.loadable_app=loadable_app(self)
+            self.loadable_app = loadable_app(self)
         except IOError:
             self.loadable_app = self.default(self.application, self.request)
-
 
     @asynchronous
     def get(self, *args, **kwargs):
         """Get Handler"""
         self.loadable_app.get(*args, **kwargs)
 
-
     @asynchronous
     def post(self, *args, **kwargs):
         """Get Handler"""
         self.loadable_app.post(*args, **kwargs)
-
 
     @asynchronous
     def put(self, *args, **kwargs):
         """Get Handler"""
         self.loadable_app.put(*args, **kwargs)
 
-
     @asynchronous
     def delete(self, *args, **kwargs):
         """Get Handler"""
         self.loadable_app.delete(*args, **kwargs)
-

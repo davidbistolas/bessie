@@ -1,16 +1,14 @@
 from tornado.web import asynchronous
-from apphandler.application import loadable
+from apphandler.application import Loadable
 
 
-class Application(loadable):
-
+class Application(Loadable):
     @asynchronous
     def get(self, *args, **kwargs):
-        self.fetch("http://www.google.ca", callback = self.got)
+        self.fetch("http://www.google.ca", callback=self.got)
 
     @asynchronous
     def got(self, data):
         self.handler.write(data.body)
         print data
         self.handler.finish()
-

@@ -1,8 +1,8 @@
 from tornado.web import asynchronous
-from apphandler.application import loadable
+from apphandler.application import Loadable
 
 
-class Application(loadable):
+class Application(Loadable):
 
     @asynchronous
     def get(self, *args, **kwargs):

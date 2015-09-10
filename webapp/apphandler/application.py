@@ -1,9 +1,8 @@
 from tornado.web import asynchronous
 from tornado.web import HTTPError
-from apphandler.basehandler import BaseHandler
 
-class loadable(object):
 
+class Loadable(object):
     def __init__(self, handler):
         self.handler = handler
         self.fetch = handler.fetch
@@ -33,5 +32,5 @@ class loadable(object):
 
     def _stack_context_handle_exception(self, a, b, c):
         """Handle exceptions"""
-        #TODO: Actually handle exceptions.
-        print a,b,c
+        # TODO: Actually handle exceptions.
+        print a, b, c
