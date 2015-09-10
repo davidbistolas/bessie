@@ -4,11 +4,12 @@ import base64
 import time
 import logging
 import functools
+import imp
 
 import tornado
 from tornado import web, ioloop, options
 from tornado.httpclient import AsyncHTTPClient
-
+from tornado.web import asynchronous
 
 class BaseHandler(tornado.web.RequestHandler):
     """Base request handler- all other handlers will subclass this
@@ -195,23 +196,41 @@ class BaseHandler(tornado.web.RequestHandler):
     def data_received(self, chunk):
         pass
 
+    def get(self, *args, **kwargs):
+        self.write_error(500)
+
+    def put(self, *args, **kwargs):
+        self.write_error(500)
+
+    def delete(self, *args, **kwargs):
+        self.write_error(500)
+
+    def post(self, *args, **kwargs):
+        self.write_error(500)
+
 
 class AppHandler(BaseHandler):
     """Handler for applications"""
 
     def __init__(self, application, request, path=None, **kwargs):
-        super(AppHandler, self).__init__(application, request, **kwargs)
         self.path = path
+        self.application = application
+        self.request = request
+        self.default = BaseHandler
+        super(AppHandler, self).__init__(application, request, **kwargs)
 
     def initialize(self, path=None):
-        """Initialize the application Handler"""
+        """Initialize the application.py Handler"""
         super(AppHandler, self).initialize()
+        uri = "{}{}.py".format(self.path, self.request.uri)
+        try:
+            loadable_app = imp.load_source('handler',uri)
+        except IOError:
+            loadable_app = self.default
 
-    def get(self, args):
+        self.loadable_app = loadable_app.Application(self)
+
+    def get(self, *args, **kwargs):
         """Get Handler"""
-        uri = "{}/{}".format(self.path, self.request.uri)
-        self.write(str(uri))
-        self.finish()
 
-    def data_received(self, chunk):
-        pass
+        self.loadable_app.get(*args, **kwargs)

@@ -8,7 +8,7 @@ from apphandler.basehandler import AppHandler
 
 def get_web_app():
     """
-    Builds the application class for the webserver.
+    Builds the application.py class for the webserver.
     :return: tornado.web.Application
     """
     app = tornado.options.options.applications
