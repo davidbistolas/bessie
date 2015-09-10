@@ -10,6 +10,7 @@ import tornado
 from tornado import ioloop, options
 from tornado.httpclient import AsyncHTTPClient
 from tornado.web import asynchronous
+
 import apphandler
 
 
@@ -199,6 +200,7 @@ class BaseHandler(tornado.web.RequestHandler):
                 callback(response)
 
     def data_received(self, chunk):
+        super(BaseHandler, self).data_received(chunk)
         pass
 
     def get(self, *args, **kwargs):

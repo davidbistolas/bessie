@@ -15,7 +15,7 @@ def get_web_app():
     static_path = tornado.options.options.static_path
     return tornado.web.Application([
         (r"/api/(.*)", AppHandler,  {"path": app}),
-        (r'/(.*)', tornado.web.StaticFileHandler, {'path': static_path})
+        (r'/(.*)', tornado.web.StaticFileHandler, {'path': static_path, "default_filename": "index.html"}),
 
     ],
         cookie_secret=tornado.options.options.hmac_key,
@@ -43,7 +43,9 @@ def configure(config_file):
     tornado.options.define("static_path",
                            default="./static",
                            help="Location of Applications")
-
+    tornado.options.define("template_path",
+                           default="./templates",
+                           help="Template location")
     tornado.options.define("development",
                            default=True,
                            help="Development/Debug Mode")
