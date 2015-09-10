@@ -56,7 +56,7 @@ class BaseHandler(tornado.web.RequestHandler):
         :param **kwargs:
         """
 
-        cookie_secret = self.application.settings["cookie_secret"]
+        cookie_secret = self.api_app.settings["cookie_secret"]
 
         encoded_cookie = self.get_cookie(name)
         if encoded_cookie is None:
@@ -92,7 +92,7 @@ class BaseHandler(tornado.web.RequestHandler):
         """
         Sets the nginx compatible secure cookie
         """
-        cookie_secret = self.application.settings["cookie_secret"]
+        cookie_secret = self.api_app.settings["cookie_secret"]
         timestamp = str(int(time.time()))
         webapp_hash = self.hmac_for_nginx(cookie_secret, value)
         encoded_value = base64.b64encode(value)
@@ -219,19 +219,22 @@ class BaseHandler(tornado.web.RequestHandler):
 class AppHandler(BaseHandler):
     """Handler for applications"""
 
+    def __init__(self, application, request, path=None, **kwargs):
+        self.path = path
+        self.api_app = application
+        self.request = request
+        self.api_app = BaseHandler(self.api_app, self.request)
+        super(AppHandler, self).__init__(application, request, **kwargs)
+
     def data_received(self, chunk):
         super(AppHandler, self).data_received(chunk)
 
-    def __init__(self, application, request, path=None, **kwargs):
-        self.path = path
-        self.application = application
-        self.request = request
-        self.default = BaseHandler
-        super(AppHandler, self).__init__(application, request, **kwargs)
-
-    def get_application_from_module(self, module):
+    def initialize(self, path=None):
+        """Initialize the application.py Handler"""
+        super(AppHandler, self).initialize()
+        module_path = ".{}.py".format(self.request.uri)
+        module = imp.load_source('handler', module_path)
         module_dictionary = module.__dict__
-
         results = [
             module_dictionary[classname] for classname in module_dictionary if (
                 isinstance(module_dictionary[classname], type) and
@@ -239,39 +242,32 @@ class AppHandler(BaseHandler):
             )
             ]
 
-        for result in results:
-            if apphandler.application.loadable in result.__bases__:
-                return result
-
-        raise Exception("Unable to load application from {}".format(str(module)))
-
-    def initialize(self, path=None):
-        """Initialize the application.py Handler"""
-        super(AppHandler, self).initialize()
-        module_path = ".{}.py".format(self.request.uri)
-        try:
-            module = imp.load_source('handler', module_path)
-            loadable_app = self.get_application_from_module(module)
-            self.loadable_app = loadable_app(self)
-        except IOError:
-            self.loadable_app = self.default(self.application, self.request)
-
+        for app in results:
+            if apphandler.application.Loadable in app.__bases__:
+                self.api_app = app(self)
+                print "Loaded module {} from {}".format(app.__name__, module_path)
     @asynchronous
     def get(self, *args, **kwargs):
-        """Get Handler"""
-        self.loadable_app.get(*args, **kwargs)
-
+        """GET Method Handler"""
+        try:
+            self.api_app.get(*args, **kwargs)
+        except Exception, e:
+            self.set_status(500, str(e))
+            self.finish()
     @asynchronous
     def post(self, *args, **kwargs):
-        """Get Handler"""
-        self.loadable_app.post(*args, **kwargs)
-
+        """POST Method Handler"""
+        try:
+            self.api_app.post(*args, **kwargs)
+        except Exception, e:
+            self.set_status(500, str(e))
+            self.finish()
     @asynchronous
     def put(self, *args, **kwargs):
-        """Get Handler"""
-        self.loadable_app.put(*args, **kwargs)
+        """PUT Method Handler"""
+        self.api_app.put(*args, **kwargs)
 
     @asynchronous
     def delete(self, *args, **kwargs):
-        """Get Handler"""
-        self.loadable_app.delete(*args, **kwargs)
+        """DELETE Method Handler"""
+        self.api_app.delete(*args, **kwargs)
